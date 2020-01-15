@@ -1,18 +1,34 @@
+<?php
 function getTkrData($ch, $tkr) {
-    $url = "https://www.asx.com.au/asx/1/company/$tkr?fields=primary_share,latest_annual_reports,last_dividend,primary_share.indices&callback=angular.callbacks._0";
+    $url = "https://www.asx.com.au/asx/1/company/$tkr?fields=primary_share,latest_annual_reports,last_dividend,primary_share.indices&callback=";
     curl_setopt($ch, CURLOPT_URL, $url);
-    $jsonStr = curl_exec($ch);
+    $response = curl_exec($ch);
+	$jsonStr = substr($response, 1, strlen($response) - 3);
     return json_decode($jsonStr);
 }
 
 $ch = curl_init();
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-$tkrs = file($filename, FILE_IGNORE_NEW_LINES);
+$tkrs = file('tkrs.txt', FILE_IGNORE_NEW_LINES);
 foreach ($tkrs as $tkr) {
     $data = getTkrData($ch, $tkr);
-    if ($data->primary_share->day_high_price == $data->primary_share->year_high_price) {
+	
+	$dailyHigh = null;
+	if (isset($data->primary_share->day_high_price)) {
+		$dailyHigh = $data->primary_share->day_high_price;
+	}
+	
+	$yearlyHigh = null;
+	if (isset($data->primary_share->year_high_price)) {
+		$yearlyHigh = floatval($data->primary_share->year_high_price);
+	}
+	
+    if ($dailyHigh != null && $yearlyHigh != null && $dailyHigh > 0.04 && $dailyHigh == $yearlyHigh) {
         echo "$tkr,";
-    }
+    } else {
+		echo '.';
+	}
 }
 
 echo 'done';
