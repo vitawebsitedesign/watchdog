@@ -10,9 +10,10 @@ function getTkrData($ch, $tkr) {
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
+$tkrsBlacklist = file('tkrs-blacklist.txt', FILE_IGNORE_NEW_LINES);
 $tkrs = file('tkrs.txt', FILE_IGNORE_NEW_LINES);
 foreach ($tkrs as $tkr) {
-    $data = getTkrData($ch, $tkr);
+	$data = getTkrData($ch, $tkr);
 	
 	$dailyHigh = null;
 	if (isset($data->primary_share->day_high_price)) {
@@ -24,7 +25,7 @@ foreach ($tkrs as $tkr) {
 		$yearlyHigh = floatval($data->primary_share->year_high_price);
 	}
 	
-    if ($dailyHigh != null && $yearlyHigh != null && $dailyHigh > 0.04 && $dailyHigh == $yearlyHigh) {
+    if ($dailyHigh != null && $yearlyHigh != null && $dailyHigh > 0.04 && $dailyHigh == $yearlyHigh && !in_array($tkr, $tkrsBlacklist)) {
         echo "$tkr,";
     } else {
 		echo '.';
